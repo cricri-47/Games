@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="fr">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Cadre photos</title>
+<style>
+*{box-sizing:border-box}html,body{margin:0;min-height:100%;background:#161616;color:#eee;font:13px system-ui,sans-serif}body{display:grid;place-items:center;min-height:100vh}
+#cadre{position:relative;width:min(400px,100vw);height:min(300px,100vh);background:#111;overflow:hidden;outline:none;border:1px solid #333;border-radius:3px}
+#photo{width:100%;height:100%;object-fit:contain;display:none;cursor:pointer}#accueil{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:12px;text-align:center;padding:18px}p{margin:0;color:#aaa;font-size:12px;line-height:1.5}
+button,select{font:inherit;color:#eee;background:#303030;border:1px solid #555;border-radius:4px;padding:5px 8px;cursor:pointer}button:hover{background:#494949}button:focus-visible,select:focus-visible{outline:2px solid #c2d9ff}
+#commandes{position:absolute;bottom:0;left:0;right:0;display:flex;align-items:center;justify-content:center;gap:5px;padding:8px 4px;background:#111d}#compteur{font-size:11px;min-width:38px;text-align:center}#message{position:absolute;top:6px;left:6px;right:6px;background:#111c;text-align:center;font-size:12px;pointer-events:none}input[hidden],[hidden]{display:none!important}
+</style>
+<main id="cadre" tabindex="0" aria-label="Cadre photos, flèches pour naviguer, espace pour le diaporama">
+ <img id="photo" alt="">
+ <div id="accueil"><strong>Votre cadre photos</strong><button id="popupAccueil">Ouvrir en pop-up ↗</button><button id="ouvrir">Choisir des photos</button><button id="dossierAccueil">Choisir un dossier</button><p>Ou déposez des photos ici.<br>Affichage sans déformation, 400 × 300 maximum.</p></div>
+ <div id="message" role="status"></div>
+ <nav id="commandes" aria-label="Commandes" hidden>
+  <button id="popup" title="Ouvrir en pop-up" aria-label="Ouvrir en pop-up">↗</button>
+  <button id="ajouter" title="Choisir des photos" aria-label="Choisir des photos">＋</button>
+  <button id="dossierBouton" title="Choisir un dossier" aria-label="Choisir un dossier">▤</button>
+  <button id="precedent" title="Photo précédente" aria-label="Photo précédente">‹</button>
+  <button id="lecture" title="Lecture ou pause">▶</button>
+  <button id="suivant" title="Photo suivante" aria-label="Photo suivante">›</button>
+  <span id="compteur"></span>
+  <select id="delai" aria-label="Durée par photo"><option value="3000">3 s</option><option value="5000" selected>5 s</option><option value="10000">10 s</option><option value="30000">30 s</option></select>
+ </nav>
+</main>
+<input id="fichiers" type="file" accept="image/*" multiple hidden>
+<input id="dossier" type="file" accept="image/*" webkitdirectory multiple hidden>
+<script>
+'use strict';
+const $=id=>document.getElementById(id);
+let photos=[],position=0,timer=null,url=null;
+function ouvrirPopup(){
+ const gauche=Math.max(0,Math.round((screen.availWidth-400)/2));
+ const haut=Math.max(0,Math.round((screen.availHeight-300)/2));
+ const fenetre=window.open('','_blank',`popup=yes,width=400,height=300,left=${gauche},top=${haut},menubar=no,toolbar=no,location=no,status=no,scrollbars=no,resizable=yes`);
+ if(!fenetre){$('message').textContent='Autorisez les fenêtres pop-up pour ouvrir le cadre.';return;}
+ fenetre.cadreInitial={photos:photos.slice(),position,delai:$('delai').value,lecture:Boolean(timer)};
+ fenetre.document.open();
+ fenetre.document.write('<!doctype html>'+document.documentElement.outerHTML);
+ fenetre.document.close();
+ pause();fenetre.focus();
+}
+function pause(){clearInterval(timer);timer=null;$('lecture').textContent='▶';$('lecture').setAttribute('aria-label','Démarrer le diaporama');}
+function afficher(){
+ if(!photos.length)return;
+ if(url)URL.revokeObjectURL(url);
+ url=URL.createObjectURL(photos[position]);
+ $('message').textContent='';$('photo').src=url;$('photo').alt=photos[position].name;
+ $('compteur').textContent=`${position+1}/${photos.length}`;
+}
+function avancer(pas){if(photos.length){position=(position+pas+photos.length)%photos.length;afficher();}}
+function demarrer(){pause();if(photos.length<2)return;timer=setInterval(()=>avancer(1),Number($('delai').value));$('lecture').textContent='Ⅱ';$('lecture').setAttribute('aria-label','Mettre le diaporama en pause');}
+function charger(liste){
+ const selection=Array.from(liste).filter(f=>f.type.startsWith('image/')||/\.(jpe?g|png|gif|webp|avif|bmp|svg)$/i.test(f.name)).sort((a,b)=>(a.webkitRelativePath||a.name).localeCompare(b.webkitRelativePath||b.name,'fr',{numeric:true}));
+ if(!selection.length){$('message').textContent='Aucune image compatible sélectionnée.';return;}
+ pause();photos=selection;position=0;$('accueil').hidden=true;$('commandes').hidden=true;$('photo').style.display='block';afficher();$('cadre').focus();
+}
+$('ouvrir').onclick=$('ajouter').onclick=()=>$('fichiers').click();
+$('popupAccueil').onclick=$('popup').onclick=ouvrirPopup;
+$('dossierAccueil').onclick=$('dossierBouton').onclick=()=>$('dossier').click();
+for(const id of ['fichiers','dossier'])$(id).onchange=e=>{charger(e.target.files);e.target.value='';};
+$('precedent').onclick=()=>avancer(-1);$('suivant').onclick=()=>avancer(1);
+$('lecture').onclick=()=>timer?pause():demarrer();$('delai').onchange=()=>{if(timer)demarrer();};
+$('photo').onerror=()=>{$('message').textContent='Image illisible : '+photos[position].name;};
+$('photo').onclick=()=>{$('commandes').hidden=!$('commandes').hidden;};
+$('photo').title='Cliquer pour afficher ou masquer les commandes';
+$('cadre').addEventListener('keydown',e=>{if(e.key==='Escape'){$('commandes').hidden=true;$('cadre').focus();}if(e.key==='Enter'&&e.target===$('cadre')&&photos.length){e.preventDefault();$('commandes').hidden=!$('commandes').hidden;}});
+$('cadre').ondragover=e=>e.preventDefault();$('cadre').ondrop=e=>{e.preventDefault();charger(e.dataTransfer.files);};
+$('cadre').onkeydown=e=>{if(/^(BUTTON|SELECT)$/.test(e.target.tagName))return;if(e.key==='ArrowLeft'){e.preventDefault();avancer(-1);}if(e.key==='ArrowRight'){e.preventDefault();avancer(1);}if(e.code==='Space'){e.preventDefault();timer?pause():demarrer();}};
+window.addEventListener('beforeunload',()=>{if(url)URL.revokeObjectURL(url);});
+pause();
+if(window.cadreInitial){
+ const initial=window.cadreInitial;delete window.cadreInitial;
+ $('popupAccueil').hidden=true;$('popup').hidden=true;
+ $('delai').value=initial.delai;
+ if(initial.photos.length){charger(initial.photos);position=initial.position;afficher();if(initial.lecture)demarrer();}
+}
+</script>
+</html>
+
