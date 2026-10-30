@@ -1,0 +1,45 @@
+TETRIS DUEL LOCAL — Windows 10 / Windows 11
+
+1. Copiez tetris-duel.html sur les deux ordinateurs.
+2. Connectez les ordinateurs au même réseau privé de confiance.
+3. Ouvrez le fichier avec Edge ou Chrome sur chaque ordinateur.
+4. Joueur 1 : cliquez sur « Créer une invitation », attendez le code,
+   puis transmettez tout le code au joueur 2 (messagerie, fichier texte, etc.).
+5. Joueur 2 : collez le code dans « Code reçu », cliquez sur
+   « Répondre à une invitation », puis transmettez votre code au joueur 1.
+6. Joueur 1 : collez la réponse dans « Code reçu », puis cliquez sur
+   « Accepter la réponse ».
+7. Quand « Connecté » apparaît, chacun clique sur « Je suis prêt ».
+   La partie démarre après un décompte de trois secondes sur chaque poste.
+
+Chaque joueur reçoit la même suite de pièces (sacs de sept pièces),
+mais avance à son rythme. L'empilement et le score sont individuels.
+La grille adverse est affichée. Le premier à déborder perd.
+Cliquez chacun sur « Rejouer · je suis prêt » pour une nouvelle manche.
+
+Commandes : flèches gauche/droite, haut pour tourner, bas pour descendre,
+espace pour poser immédiatement. Gardez le jeu visible et actif.
+« Essayer en solo » permet de vérifier le jeu avant de connecter les postes.
+
+Connexion : WebRTC direct, sans STUN/TURN, sans Teams, sans serveur
+et sans requête vers un service externe. Les codes contiennent les données
+temporaires de connexion : transmettez-les uniquement à votre partenaire.
+Ils doivent être générés à nouveau après rechargement de la page.
+Le décompte est indicatif : ce prototype ne corrige pas la latence réseau.
+
+Si la connexion n'aboutit pas : utilisez Edge ou Chrome à jour, vérifiez
+que le Wi-Fi n'est pas un réseau invité et que l'isolation des appareils
+n'est pas activée. Les VLAN, VPN et pare-feux peuvent empêcher le contact.
+Ne désactivez pas votre pare-feu. Sur un réseau personnel de confiance,
+si Windows affiche une demande, autorisez le navigateur sur réseau privé.
+Sur un réseau géré par une entreprise, adressez-vous à son équipe IT.
+En cas d'interruption : rechargez les deux pages et recommencez l'échange.
+
+Le record est conservé avec localStorage, dans le navigateur local.
+Pour les fichiers ouverts directement, cette conservation dépend du
+navigateur et du chemin du fichier. Déplacer/renommer le fichier, changer
+de navigateur ou effacer ses données peut rendre le record indisponible.
+Le jeu fonctionne même si le stockage est indisponible.
+
+Prototype amical : les clients font confiance aux scores reçus,
+sans protection contre la triche. Pas de classement partagé permanent.
